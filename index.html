@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zenaf — Train the AI that thinks like you</title>
-<meta name="description" content="Zenaf turns your decisions, craft, and ideals into a digital doppelgänger — a personally trained agent that works in your voice.">
+<meta name="description" content="Zenaf turns your decisions, craft, and ideals into a digital avatar — a personally trained agent that works in your voice.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -20,15 +20,11 @@
   body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
   ::selection{background:var(--accent);color:#0b0b0f}
   .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
-
-  /* ambient glow */
   .glow{position:fixed;inset:0;pointer-events:none;z-index:0;
     background:
       radial-gradient(900px 500px at 15% -5%, rgba(232,196,118,.07), transparent 60%),
       radial-gradient(800px 500px at 90% 20%, rgba(157,184,232,.06), transparent 60%);}
   main{position:relative;z-index:1}
-
-  /* nav */
   nav{position:sticky;top:0;z-index:10;backdrop-filter:blur(14px);background:rgba(11,11,15,.72);border-bottom:1px solid var(--line)}
   nav .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
   .brand{font-family:var(--serif);font-size:24px;letter-spacing:.04em;color:var(--text);text-decoration:none}
@@ -41,8 +37,6 @@
   .btn:hover{transform:translateY(-1px);box-shadow:0 8px 30px rgba(232,196,118,.25)}
   .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
   .btn.ghost:hover{box-shadow:none;border-color:var(--accent)}
-
-  /* hero */
   .hero{padding:120px 0 90px;text-align:center}
   .kicker{display:inline-block;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);
     border:1px solid rgba(232,196,118,.3);border-radius:999px;padding:7px 18px;margin-bottom:28px}
@@ -50,37 +44,27 @@
   h1 em{font-style:italic;color:var(--accent)}
   .lede{font-size:19px;color:var(--muted);max-width:640px;margin:0 auto 40px}
   .hero-cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
-
-  /* sections */
   section{padding:90px 0;border-top:1px solid var(--line)}
   .eyebrow{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--faint);margin-bottom:16px}
   h2{font-family:var(--serif);font-weight:400;font-size:clamp(32px,4.5vw,52px);line-height:1.12;margin-bottom:20px;max-width:760px}
   h2 em{font-style:italic;color:var(--accent2)}
   .body-copy{color:var(--muted);font-size:17px;max-width:680px}
   .body-copy strong{color:var(--text);font-weight:500}
-
-  /* cards */
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-top:48px}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:32px 28px;transition:transform .2s,border-color .2s}
   .card:hover{transform:translateY(-3px);border-color:rgba(232,196,118,.35)}
   .card .n{font-family:var(--serif);font-style:italic;color:var(--accent);font-size:15px;margin-bottom:12px;display:block}
   .card h3{font-size:19px;font-weight:600;margin-bottom:10px}
   .card p{color:var(--muted);font-size:15px}
-
-  /* quote band */
   .band{background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);text-align:center}
   .band blockquote{font-family:var(--serif);font-style:italic;font-size:clamp(24px,3.6vw,38px);line-height:1.35;max-width:800px;margin:0 auto}
   .band blockquote strong{color:var(--accent);font-weight:500}
-
-  /* steps */
   .steps{counter-reset:step;margin-top:48px;display:grid;gap:0}
   .step{display:grid;grid-template-columns:72px 1fr;gap:8px 20px;padding:30px 0;border-top:1px solid var(--line)}
   .step:last-child{border-bottom:1px solid var(--line)}
   .step .num{font-family:var(--serif);font-size:34px;color:var(--accent);line-height:1}
   .step h3{font-size:19px;margin-bottom:8px}
   .step p{color:var(--muted);font-size:15px;max-width:640px}
-
-  /* waitlist */
   .waitlist-box{background:linear-gradient(160deg,#17141a,#101016);border:1px solid rgba(232,196,118,.25);border-radius:24px;
     padding:56px 40px;text-align:center;max-width:720px;margin:48px auto 0}
   .waitlist-box h2{margin-left:auto;margin-right:auto}
@@ -91,16 +75,12 @@
   input[type=email]:focus{border-color:var(--accent)}
   .form-note{font-size:12px;color:var(--faint);margin-top:16px}
   .success{display:none;font-family:var(--serif);font-style:italic;font-size:22px;color:var(--accent);padding:12px 0}
-
   footer{border-top:1px solid var(--line);padding:44px 0;color:var(--faint);font-size:13px}
   footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center}
   footer a{color:var(--muted);text-decoration:none;margin-left:20px}
   footer a:hover{color:var(--text)}
-
-  /* reveal animation */
   .rv{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s ease}
   .rv.in{opacity:1;transform:none}
-
   @media(max-width:640px){
     .navlinks a:not(.btn){display:none}
     .hero{padding:80px 0 60px}
@@ -111,7 +91,6 @@
 </head>
 <body>
 <div class="glow"></div>
-
 <nav>
   <div class="wrap">
     <a class="brand" href="#">zenaf<em>.</em></a>
@@ -123,20 +102,16 @@
     </div>
   </div>
 </nav>
-
 <main>
-  <!-- HERO -->
   <div class="wrap hero">
     <span class="kicker rv">Personally trained AI agents</span>
     <h1 class="rv">Train the AI that<br><em>thinks like you.</em></h1>
-    <p class="lede rv">Zenaf turns your decisions, your craft, and your ideals into a digital doppelgänger — an agent that works in your voice, and one day, in other people's councils too.</p>
+    <p class="lede rv">Zenaf turns your decisions, your craft, and your ideals into a digital avatar — an agent that works in your voice, and one day, gets paid to run someone else's company while you take a nap.</p>
     <div class="hero-cta rv">
       <a class="btn" href="#waitlist">Join the waitlist</a>
       <a class="btn ghost" href="#vision">Read the vision</a>
     </div>
   </div>
-
-  <!-- PROBLEM -->
   <section id="vision">
     <div class="wrap">
       <div class="eyebrow rv">The problem</div>
@@ -145,63 +120,53 @@
       <div class="grid">
         <div class="card rv"><span class="n">i.</span><h3>Models are cannibalizing themselves</h3><p>Training on AI-generated sludge flattens everything into the average. What models need — and can't synthesize — is real human judgment, with provenance.</p></div>
         <div class="card rv"><span class="n">ii.</span><h3>Your perspective has no market</h3><p>The way you decide, the way you see, the instincts honed over a career — none of it is legible, portable, or payable. It retires when you do.</p></div>
-        <div class="card rv"><span class="n">iii.</span><h3>Assistants stay generic</h3><p>Today's AI treats everyone the same. It doesn't know how <em>you</em> decide, what you aspire to, or where your judgment is sharpest.</p></div>
+        <div class="card rv"><span class="n">iii.</span><h3>Assistants stay generic</h3><p>Today's AI treats everyone the same — an echo chamber of applause. Define what you aspire to and get coaching toward it, from an AI that knows how <em>you</em> decide and where your judgment is sharpest.</p></div>
       </div>
     </div>
   </section>
-
-  <!-- IDEA -->
   <section>
     <div class="wrap">
       <div class="eyebrow rv">The idea</div>
-      <h2 class="rv">A <em>doppelgänger</em> that learns you — then works for the world.</h2>
-      <p class="body-copy rv" style="margin-top:8px">Zenaf watches how you decide, how you practice your craft, and what you aspire toward — always with your permission — and distills it into a living model of your judgment. Not a chatbot with your name on it. <strong>A decision-making model of you</strong>, sliceable by specialization: rent me as a strategist, rent me as a creative, rent me as&hellip; you.</p>
+      <h2 class="rv">A <em>digital avatar</em> that learns you — then works for the world.</h2>
+      <p class="body-copy rv" style="margin-top:8px">Zenaf watches how you decide, how you practice your craft, and what you aspire toward — always with your permission — and distills it into a living model of your judgment. Not a chatbot with your name on it. <strong>A decision-making model of you</strong>, sliceable by specialization: rent me as a strategist, rent yourself out as a creative — or build your own personal executive suite, your idols on retainer.</p>
       <div class="grid">
         <div class="card rv"><span class="n">01</span><h3>It observes, with permission</h3><p>Decisions in council, brush strokes, strum patterns, the way you run a meeting. Domain-specific observation, always opt-in, always revocable.</p></div>
-        <div class="card rv"><span class="n">02</span><h3>It trains toward who you're becoming</h3><p>You define your ideals; the system offers guidance shaped by them. Accept or reject — either way, your doppelgänger learns. Descriptive <em>and</em> aspirational.</p></div>
+        <div class="card rv"><span class="n">02</span><h3>It trains toward who you're becoming</h3><p>You define your ideals; the system offers guidance shaped by them. Accept or reject — either way, your digital avatar learns. Descriptive <em>and</em> aspirational.</p></div>
         <div class="card rv"><span class="n">03</span><h3>Your perspective, at scale</h3><p>Once trained, your seats can be rented into other people's councils at a price you set — with a public training metric so renters know exactly what they're getting.</p></div>
       </div>
     </div>
   </section>
-
-  <!-- BAND -->
   <div class="band">
     <div class="wrap" style="padding:80px 24px">
       <blockquote class="rv">"The more it watches, the more it offers to do things <strong>in your voice</strong> — expediting everything in your way. Its value rises symbiotically."</blockquote>
     </div>
   </div>
-
-  <!-- HOW -->
   <section id="how">
     <div class="wrap">
       <div class="eyebrow rv">How it works</div>
       <h2 class="rv">Training before <em>marketplace.</em></h2>
       <div class="steps">
-        <div class="step rv"><div class="num">1</div><div><h3>Live, and let it watch</h3><p>Use Zenaf as your thinking environment. It observes decisions, craft, and habits across the domains you allow — building signal from the life you're already living.</p></div></div>
-        <div class="step rv"><div class="num">2</div><div><h3>It distills, you approve</h3><p>Signals fold into your profile: decision patterns, style, heuristics, ideals. Nothing updates silently — the profile is trained <em>with</em> you, not <em>on</em> you. Snapshots archive your evolution; talk to your younger self, or rent a specific era.</p></div></div>
+        <div class="step rv"><div class="num">1</div><div><h3>Live, and let it watch</h3><p>Use Zenaf as your thinking environment. It observes decisions, craft, and habits across the domains you allow — building signal from the life you're already living. And take back your data: every conversation you've ever had with AI comes under your own umbrella, governed by your own permissions — instead of someone else profiting off it.</p></div></div>
+        <div class="step rv"><div class="num">2</div><div><h3>It distills, you approve</h3><p>Signals fold into your profile: decision patterns, style, heuristics, ideals. Nothing updates silently — the profile is trained <em>with</em> you, not <em>on</em> you. Snapshots archive your evolution: talk to your younger self — or rent 1984 Steve Jobs for the startup hunger, 1997 Steve Jobs for the turnaround mastery.</p></div></div>
         <div class="step rv"><div class="num">3</div><div><h3>Your judgment, rentable</h3><p>When your training metric speaks for itself, list your seats. Others bring your strategist — or your 2019 creative director — into their council. You set the price.</p></div></div>
       </div>
     </div>
   </section>
-
-  <!-- SOLIDARITY -->
   <section id="solidarity">
     <div class="wrap">
       <div class="eyebrow rv">Why it matters</div>
       <h2 class="rv">Solidarity between <em>AI and the humans</em> who train it.</h2>
       <div class="grid">
-        <div class="card rv"><span class="n">For the models</span><h3>Recharged with nuance</h3><p>Real, provenance-bearing human decisions instead of synthetic sludge. The antidote to cannibalism is a market that pays for the real thing.</p></div>
+        <div class="card rv"><span class="n">For the models</span><h3>Recharged with nuance</h3><p>Real, provenance-bearing human decisions instead of synthetic sludge. The antidote to law-of-averages sludge is keeping the nuance that already exists — yours.</p></div>
         <div class="card rv"><span class="n">For the humans</span><h3>Perspective becomes viable</h3><p>Your unique way of seeing stops being trapped in your head. It scales, it earns, and it outlives any single job.</p></div>
       </div>
     </div>
   </section>
-
-  <!-- WAITLIST -->
   <section id="waitlist" style="border-top:none">
     <div class="wrap">
       <div class="waitlist-box rv">
         <div class="eyebrow">Early access</div>
-        <h2>Be first to train <em style="color:var(--accent);font-style:italic">your</em> doppelgänger.</h2>
+        <h2>Be first to train <em style="color:var(--accent);font-style:italic">your</em> digital avatar.</h2>
         <p>We're starting with the training pipeline — the personal agent that learns your voice. Join the waitlist and we'll reach out as early builds open.</p>
         <form id="wl-form">
           <input type="email" id="wl-email" placeholder="you@example.com" required aria-label="Email address">
@@ -213,20 +178,14 @@
     </div>
   </section>
 </main>
-
 <footer>
   <div class="wrap">
     <span>© 2026 Zenaf · zenaf.ai</span>
     <span><a href="https://github.com/joshualeewillems-pixel/Zenaf">GitHub</a><a href="#vision">Vision</a><a href="#waitlist">Waitlist</a></span>
   </div>
 </footer>
-
 <script>
-  // ---- Waitlist endpoint -------------------------------------------------
-  // Form submissions go to FormSubmit (joshualeewillems@gmail.com).
-  // Leave empty for demo mode (shows success state locally only).
   const WAITLIST_ENDPOINT = "https://formsubmit.co/ajax/joshualeewillems@gmail.com";
-
   document.getElementById('wl-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('wl-email').value.trim();
@@ -244,12 +203,9 @@
       form.style.display = 'none';
       ok.style.display = 'block';
     } catch (err) {
-      // Fall back to mailto so no signup is ever silently lost
       window.location.href = 'mailto:hello@zenaf.ai?subject=Waitlist&body=' + encodeURIComponent(email);
     }
   });
-
-  // ---- Scroll reveal ------------------------------------------------------
   const io = new IntersectionObserver((entries) => {
     entries.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } });
   }, {threshold: 0.12});

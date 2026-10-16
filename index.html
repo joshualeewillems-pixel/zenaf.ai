@@ -154,6 +154,11 @@
         <div id="demoSave" class="demo-save">
           <h3>That's the demo.</h3>
           <p>Save this conversation to keep going — start your council with it, or continue the conversation in your account.</p>
+          <div id="claimBox" style="display:none;margin:0 auto 20px;max-width:420px;padding:16px 20px;border:1px dashed var(--accent);border-radius:16px">
+            <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Your conversation code</div>
+            <div id="claimCode" style="font-family:var(--serif);font-size:34px;letter-spacing:.18em;color:var(--accent)"></div>
+            <div style="font-size:13px;color:var(--muted);margin-top:6px">Enter this in your account to continue the conversation there.</div>
+          </div>
           <div class="hero-cta">
             <a class="btn" href="#waitlist">Save &amp; start my council</a>
             <a class="btn ghost" href="https://zenaf-staging.fly.dev/">Continue in my account</a>
@@ -367,6 +372,23 @@
         });
         localStorage.setItem('zenaf-demo-transcript', JSON.stringify({at: Date.now(), turns}));
       } catch(e) {}
+      // Issue a claim code so the conversation can continue in their account.
+      if (sessionId) {
+        fetch(API + '/demo/save', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({session_id: sessionId})
+        })
+          .then(r => r.ok ? r.json() : null)
+          .then(data => {
+            if (data && data.claim_code) {
+              document.getElementById('claimCode').textContent = data.claim_code;
+              document.getElementById('claimBox').style.display = 'block';
+              try { localStorage.setItem('zenaf-demo-claim', data.claim_code); } catch(e) {}
+            }
+          })
+          .catch(() => {});
+      }
     }
 
     formEl.addEventListener('submit', async (e) => {

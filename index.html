@@ -87,6 +87,39 @@
     section{padding:64px 0}
     .waitlist-box{padding:40px 24px}
   }
+  /* --- Anonymous council demo --- */
+  .demo-box{background:linear-gradient(160deg,#141318,#0e0e13);border:1px solid var(--line);border-radius:24px;
+    padding:36px 28px;max-width:720px;margin:0 auto}
+  .demo-box h2{font-family:var(--serif);font-weight:400;font-size:clamp(26px,4vw,36px);margin-bottom:8px}
+  .demo-box h2 em{color:var(--accent);font-style:italic}
+  .demo-sub{color:var(--muted);font-size:15px;margin-bottom:20px;max-width:560px}
+  .voice-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  .voice-chip{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:8px 16px;border-radius:999px;
+    border:1px solid var(--line);background:transparent;color:var(--muted);font-size:14px;font-family:var(--sans);
+    cursor:pointer;transition:border-color .2s,color .2s}
+  .voice-chip .dot{width:10px;height:10px;border-radius:50%;background:var(--vc,#8a8a93)}
+  .voice-chip[aria-pressed="true"]{color:var(--text);border-color:var(--vc,#8a8a93)}
+  .voice-chip[aria-pressed="true"] .dot{box-shadow:0 0 10px var(--vc,#8a8a93)}
+  .demo-chat{display:flex;flex-direction:column;gap:12px;max-height:380px;overflow-y:auto;margin-bottom:16px;
+    padding:4px 2px}
+  .demo-msg{max-width:88%;padding:12px 16px;border-radius:18px;font-size:15px;line-height:1.55}
+  .demo-msg.visitor{align-self:flex-end;background:#26262f;color:var(--text);border-bottom-right-radius:6px}
+  .demo-msg.voice{align-self:flex-start;background:#17171e;border:1px solid var(--line);color:var(--text);
+    border-bottom-left-radius:6px;border-left:3px solid var(--vc,#8a8a93)}
+  .demo-msg.voice .who{display:block;font-size:12px;margin-bottom:4px;color:var(--vc,#8a8a93);font-weight:600}
+  .demo-msg .weave{color:#e8a33d;font-weight:600}
+  .demo-msg.system{align-self:center;font-size:13px;color:var(--faint);font-style:italic;text-align:center}
+  .demo-inputrow{display:flex;gap:10px}
+  .demo-inputrow input{flex:1;background:#0b0b0f;border:1px solid var(--line);border-radius:999px;
+    padding:13px 22px;color:var(--text);font-size:15px;font-family:var(--sans);outline:none;min-width:0}
+  .demo-inputrow input:focus{border-color:var(--accent)}
+  .demo-inputrow button{flex-shrink:0}
+  .demo-count{font-size:12px;color:var(--faint);margin-top:10px;text-align:center}
+  .demo-save{display:none;text-align:center;padding:20px 8px 4px}
+  .demo-save h3{font-family:var(--serif);font-weight:400;font-size:24px;margin-bottom:8px}
+  .demo-save p{color:var(--muted);font-size:15px;margin-bottom:20px}
+  .demo-save .hero-cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+  .demo-err{align-self:center;font-size:13px;color:#c96a5a;text-align:center}
 </style>
 </head>
 <body>
@@ -111,6 +144,29 @@
       <a class="btn ghost" href="#vision">Read the vision</a>
     </div>
   </div>
+  <section id="demo" style="padding-top:20px">
+    <div class="wrap">
+      <div class="demo-box rv">
+        <h2>Try a <em>council</em> on for size.</h2>
+        <p class="demo-sub">No account. Pick a voice — or let the Mentor start — and talk. Watch your own words come back inside its replies, <span style="color:#e8a33d;font-weight:600">in a different color</span>. That's the whole idea: you make it sharper, it makes you sharper.</p>
+        <div class="voice-chips" id="voiceChips" role="group" aria-label="Choose a voice"></div>
+        <div class="demo-chat" id="demoChat" aria-live="polite"></div>
+        <div id="demoSave" class="demo-save">
+          <h3>That's the demo.</h3>
+          <p>Save this conversation to keep going — start your council with it, or continue the conversation in your account.</p>
+          <div class="hero-cta">
+            <a class="btn" href="#waitlist">Save &amp; start my council</a>
+            <a class="btn ghost" href="https://zenaf-staging.fly.dev/">Continue in my account</a>
+          </div>
+        </div>
+        <form class="demo-inputrow" id="demoForm">
+          <input id="demoInput" type="text" placeholder="Say something to your council…" autocomplete="off" maxlength="2000" aria-label="Message your council">
+          <button class="btn" type="submit" id="demoSend">Send</button>
+        </form>
+        <div class="demo-count" id="demoCount"></div>
+      </div>
+    </div>
+  </section>
   <section id="vision">
     <div class="wrap">
       <div class="eyebrow rv">The problem</div>
@@ -209,6 +265,149 @@
     entries.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } });
   }, {threshold: 0.12});
   document.querySelectorAll('.rv').forEach(el => io.observe(el));
+
+  /* --- Anonymous council demo --- */
+  (function(){
+    const API = 'https://zenaf-staging.fly.dev';
+    const FALLBACK_VOICES = [
+      {id:'mentor', name:'Mentor', color:'#c9a86a', frame:'The long view, the advisor.'},
+      {id:'champion', name:'Champion', color:'#c96a5a', frame:'Courage, will, the one who says do it.'},
+      {id:'guardian', name:'Guardian', color:'#7ba889', frame:'Holds the people impact.'},
+      {id:'maverick', name:'Maverick', color:'#9a7bc9', frame:'Lateral thinking, challenges the frame.'},
+      {id:'ambassador', name:'Ambassador', color:'#7aa3b8', frame:'The public face.'},
+      {id:'conductor', name:'Conductor', color:'#8a8a93', frame:'Synthesizes after the others speak.'},
+      {id:'skeptic', name:'Skeptic', color:'#6b6b76', frame:"Names what's being avoided."},
+    ];
+    const chipsEl = document.getElementById('voiceChips');
+    const chatEl = document.getElementById('demoChat');
+    const formEl = document.getElementById('demoForm');
+    const inputEl = document.getElementById('demoInput');
+    const sendBtn = document.getElementById('demoSend');
+    const countEl = document.getElementById('demoCount');
+    const saveEl = document.getElementById('demoSave');
+    if (!chipsEl || !chatEl || !formEl) return;
+
+    let voices = FALLBACK_VOICES;
+    let voice = 'mentor';
+    let sessionId = null;
+    let exchangesLeft = null;
+    let busy = false;
+    let capped = false;
+
+    function voiceById(id){ return voices.find(v => v.id === id) || voices[0]; }
+
+    function renderChips(){
+      chipsEl.innerHTML = '';
+      voices.forEach(v => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'voice-chip';
+        b.style.setProperty('--vc', v.color);
+        b.setAttribute('aria-pressed', v.id === voice ? 'true' : 'false');
+        b.title = v.frame;
+        const dot = document.createElement('span');
+        dot.className = 'dot';
+        b.appendChild(dot);
+        b.appendChild(document.createTextNode(v.name));
+        b.addEventListener('click', () => { voice = v.id; renderChips(); });
+        chipsEl.appendChild(b);
+      });
+    }
+
+    function weaveToHTML(text){
+      const frag = document.createDocumentFragment();
+      const re = /\[\[u\]\]([\s\S]*?)\[\[\/u\]\]/g;
+      let last = 0, m;
+      while ((m = re.exec(text)) !== null) {
+        if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+        const s = document.createElement('span');
+        s.className = 'weave';
+        s.textContent = m[1];
+        frag.appendChild(s);
+        last = m.index + m[0].length;
+      }
+      if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+      return frag;
+    }
+
+    function addMsg(kind, text, voiceInfo){
+      const d = document.createElement('div');
+      d.className = 'demo-msg ' + kind;
+      if (kind === 'voice' && voiceInfo) {
+        d.style.setProperty('--vc', voiceInfo.color);
+        const who = document.createElement('span');
+        who.className = 'who';
+        who.textContent = voiceInfo.name;
+        d.appendChild(who);
+        d.appendChild(weaveToHTML(text));
+      } else {
+        d.textContent = text;
+      }
+      chatEl.appendChild(d);
+      chatEl.scrollTop = chatEl.scrollHeight;
+    }
+
+    function updateCount(){
+      if (capped) { countEl.textContent = ''; return; }
+      countEl.textContent = exchangesLeft === null
+        ? 'This demo runs a few exchanges — then you can save it and keep going.'
+        : exchangesLeft + (exchangesLeft === 1 ? ' exchange' : ' exchanges') + ' left in the demo';
+    }
+
+    function showSave(){
+      capped = true;
+      formEl.style.display = 'none';
+      saveEl.style.display = 'block';
+      updateCount();
+      // Stash the transcript for the save flow.
+      try {
+        const turns = [];
+        chatEl.querySelectorAll('.demo-msg').forEach(el => {
+          turns.push({kind: el.classList.contains('visitor') ? 'visitor' : 'voice', text: el.textContent});
+        });
+        localStorage.setItem('zenaf-demo-transcript', JSON.stringify({at: Date.now(), turns}));
+      } catch(e) {}
+    }
+
+    formEl.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (busy || capped) return;
+      const msg = inputEl.value.trim();
+      if (!msg) return;
+      busy = true; sendBtn.disabled = true;
+      addMsg('visitor', msg);
+      inputEl.value = '';
+      const v = voiceById(voice);
+      try {
+        const r = await fetch(API + '/demo/chat', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({session_id: sessionId, voice: voice, message: msg})
+        });
+        if (r.status === 403) { showSave(); return; }
+        if (r.status === 429) { addMsg('system', 'Easy — the demo needs a breather. Try again in a bit.'); return; }
+        if (!r.ok) throw new Error('bad status ' + r.status);
+        const data = await r.json();
+        sessionId = data.session_id;
+        exchangesLeft = data.exchanges_left;
+        addMsg('voice', data.reply, v);
+        if (data.capped) showSave(); else updateCount();
+      } catch(err) {
+        addMsg('system', 'The voices are quiet right now — try again in a moment.');
+      } finally {
+        busy = false; sendBtn.disabled = false;
+      }
+    });
+
+    // Voices from the backend when reachable; fallback colors otherwise.
+    fetch(API + '/demo/voices')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (Array.isArray(data) && data.length) { voices = data; renderChips(); } })
+      .catch(() => {});
+    renderChips();
+    addMsg('system', 'Say something — anything on your mind. The ' + voiceById(voice).name + ' is listening.');
+    updateCount();
+  })();
 </script>
 </body>
 </html>

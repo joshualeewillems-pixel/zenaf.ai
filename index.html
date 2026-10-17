@@ -367,14 +367,15 @@
       d.appendChild(body);
       chatEl.appendChild(d);
       let raw = '';
+      function render(){
+        body.innerHTML = '';
+        body.appendChild(weaveToHTML(raw));
+        chatEl.scrollTop = chatEl.scrollHeight;
+      }
       return {
         el: d,
-        push(text){
-          raw += text;
-          body.innerHTML = '';
-          body.appendChild(weaveToHTML(raw));
-          chatEl.scrollTop = chatEl.scrollHeight;
-        },
+        push(text){ raw += text; render(); },
+        set(text){ raw = text; render(); },
         remove(){ d.remove(); }
       };
     }
@@ -428,6 +429,7 @@
             if (ev.type === 'token' && ev.text) bubble.push(ev.text);
             else if (ev.type === 'done') {
               gotDone = true;
+              if (typeof ev.reply === 'string') bubble.set(ev.reply);
               sessionId = ev.session_id;
               exchangesLeft = ev.exchanges_left;
               if (ev.capped) showSave(); else updateCount();

@@ -350,6 +350,97 @@
       }
       chatEl.appendChild(d);
       chatEl.scrollTop = chatEl.scrollHeight;
+      return d;
+    }
+
+    // Streaming voice bubble: created empty, tokens appended as they arrive.
+    // Re-renders the full text each chunk so [[u]] weave markers resolve live.
+    function startVoiceMsg(voiceInfo){
+      const d = document.createElement('div');
+      d.className = 'demo-msg voice';
+      d.style.setProperty('--vc', voiceInfo.color);
+      const who = document.createElement('span');
+      who.className = 'who';
+      who.textContent = voiceInfo.name;
+      d.appendChild(who);
+      const body = document.createElement('span');
+      d.appendChild(body);
+      chatEl.appendChild(d);
+      let raw = '';
+      return {
+        el: d,
+        push(text){
+          raw += text;
+          body.innerHTML = '';
+          body.appendChild(weaveToHTML(raw));
+          chatEl.scrollTop = chatEl.scrollHeight;
+        },
+        remove(){ d.remove(); }
+      };
+    }
+
+    async function chatOnce(msg, v){
+      // Non-streaming fallback (also used when /demo/stream is unavailable).
+      const r = await fetch(API + '/demo/chat', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({session_id: sessionId, voice: voice, message: msg})
+      });
+      if (r.status === 403) { showSave(); return; }
+      if (r.status === 429) { addMsg('system', 'Easy — the demo needs a breather. Try again in a bit.'); return; }
+      if (!r.ok) throw new Error('bad status ' + r.status);
+      const data = await r.json();
+      sessionId = data.session_id;
+      exchangesLeft = data.exchanges_left;
+      addMsg('voice', data.reply, v);
+      if (data.capped) showSave(); else updateCount();
+    }
+
+    async function chatStream(msg, v){
+      // Returns true if the stream completed (or was handled); false to fall back.
+      let r;
+      try {
+        r = await fetch(API + '/demo/stream', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({session_id: sessionId, voice: voice, message: msg})
+        });
+      } catch(e) { return false; }
+      if (r.status === 403) { showSave(); return true; }
+      if (r.status === 429) { addMsg('system', 'Easy — the demo needs a breather. Try again in a bit.'); return true; }
+      if (!r.ok || !r.body) return false;
+      const bubble = startVoiceMsg(v);
+      const reader = r.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = '', gotDone = false;
+      try {
+        for (;;) {
+          const {done, value} = await reader.read();
+          if (done) break;
+          buf += decoder.decode(value, {stream: true});
+          let idx;
+          while ((idx = buf.indexOf('\n\n')) !== -1) {
+            const frame = buf.slice(0, idx).trim();
+            buf = buf.slice(idx + 2);
+            if (!frame.startsWith('data:')) continue;
+            let ev;
+            try { ev = JSON.parse(frame.slice(5).trim()); } catch(e) { continue; }
+            if (ev.type === 'token' && ev.text) bubble.push(ev.text);
+            else if (ev.type === 'done') {
+              gotDone = true;
+              sessionId = ev.session_id;
+              exchangesLeft = ev.exchanges_left;
+              if (ev.capped) showSave(); else updateCount();
+            } else if (ev.type === 'error') {
+              bubble.remove();
+              addMsg('system', 'The voices are quiet right now — try again in a moment.');
+              return true;
+            }
+          }
+        }
+      } catch(e) { return false; }
+      if (!gotDone) { bubble.remove(); return false; }
+      return true;
     }
 
     function updateCount(){
@@ -401,19 +492,8 @@
       inputEl.value = '';
       const v = voiceById(voice);
       try {
-        const r = await fetch(API + '/demo/chat', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({session_id: sessionId, voice: voice, message: msg})
-        });
-        if (r.status === 403) { showSave(); return; }
-        if (r.status === 429) { addMsg('system', 'Easy — the demo needs a breather. Try again in a bit.'); return; }
-        if (!r.ok) throw new Error('bad status ' + r.status);
-        const data = await r.json();
-        sessionId = data.session_id;
-        exchangesLeft = data.exchanges_left;
-        addMsg('voice', data.reply, v);
-        if (data.capped) showSave(); else updateCount();
+        const streamed = await chatStream(msg, v);
+        if (!streamed) await chatOnce(msg, v);
       } catch(err) {
         addMsg('system', 'The voices are quiet right now — try again in a moment.');
       } finally {

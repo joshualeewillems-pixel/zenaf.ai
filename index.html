@@ -100,6 +100,10 @@
   .voice-chip .dot{width:10px;height:10px;border-radius:50%;background:var(--vc,#8a8a93)}
   .voice-chip[aria-pressed="true"]{color:var(--text);border-color:var(--vc,#8a8a93)}
   .voice-chip[aria-pressed="true"] .dot{box-shadow:0 0 10px var(--vc,#8a8a93)}
+  .tapmode-row{margin:-8px 0 16px}
+  .tapmode{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+  .tapmode button{background:transparent;border:0;color:var(--muted);font-size:13px;font-family:var(--sans);padding:10px 18px;min-height:44px;cursor:pointer}
+  .tapmode button[aria-pressed="true"]{background:#26262f;color:var(--text)}
   .demo-chat{display:flex;flex-direction:column;gap:12px;max-height:380px;overflow-y:auto;margin-bottom:16px;
     padding:4px 2px}
   .demo-msg{max-width:88%;padding:12px 16px;border-radius:18px;font-size:15px;line-height:1.55}
@@ -150,6 +154,13 @@
         <h2>Try a <em>council</em> on for size.</h2>
         <p class="demo-sub">No account. Pick a voice — or let the Mentor start — and talk. Watch your own words come back inside its replies, <span style="color:#e8a33d;font-weight:600">in a different color</span>. That's the whole idea: you make it sharper, it makes you sharper.</p>
         <div class="voice-chips" id="voiceChips" role="group" aria-label="Choose a voice"></div>
+        <div class="tapmode-row">
+          <span style="font-size:13px;color:var(--muted);margin-right:10px">Tap a voice to…</span>
+          <span class="tapmode" role="group" aria-label="Tap a voice to">
+            <button type="button" id="tapRespond" aria-pressed="true">Respond</button>
+            <button type="button" id="tapQuestion" aria-pressed="false">Question me</button>
+          </span>
+        </div>
         <div class="demo-chat" id="demoChat" aria-live="polite"></div>
         <div id="demoSave" class="demo-save">
           <h3>That's the demo.</h3>
@@ -298,6 +309,21 @@
     let exchangesLeft = null;
     let busy = false;
     let capped = false;
+    // Tap-a-voice behavior: 'respond' (voice answers the conversation) or
+    // 'question' (voice asks the visitor one penetrating question).
+    let tapMode = 'respond';
+    const tapRespond = document.getElementById('tapRespond');
+    const tapQuestion = document.getElementById('tapQuestion');
+    function renderTapMode(){
+      if (!tapRespond || !tapQuestion) return;
+      tapRespond.setAttribute('aria-pressed', tapMode === 'respond' ? 'true' : 'false');
+      tapQuestion.setAttribute('aria-pressed', tapMode === 'question' ? 'true' : 'false');
+    }
+    if (tapRespond && tapQuestion) {
+      tapRespond.addEventListener('click', () => { tapMode = 'respond'; renderTapMode(); });
+      tapQuestion.addEventListener('click', () => { tapMode = 'question'; renderTapMode(); });
+      renderTapMode();
+    }
 
     function voiceById(id){ return voices.find(v => v.id === id) || voices[0]; }
 
@@ -373,8 +399,11 @@
       chatEl.appendChild(d);
       let raw = '';
       function render(){
+        // Hide a trailing partial weave marker while streaming (e.g. chunks
+        // split "[[u]]" mid-tag); the final set() settles the true text.
+        const display = raw.replace(/\[\[(?:\/?u?\]?)?$/,'');
         body.innerHTML = '';
-        body.appendChild(weaveToHTML(raw));
+        body.appendChild(weaveToHTML(display));
         chatEl.scrollTop = chatEl.scrollHeight;
       }
       return {
@@ -390,7 +419,7 @@
       const r = await fetch(API + '/demo/chat', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({session_id: sessionId, voice: voice, message: msg})
+        body: JSON.stringify({session_id: sessionId, voice: voice, message: msg, mode: tapMode})
       });
       if (r.status === 403) { showSave(); return; }
       if (r.status === 429) { addMsg('system', 'Easy — the demo needs a breather. Try again in a bit.'); return; }
@@ -409,7 +438,7 @@
         r = await fetch(API + '/demo/stream', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({session_id: sessionId, voice: voice, message: msg})
+          body: JSON.stringify({session_id: sessionId, voice: voice, message: msg, mode: tapMode})
         });
       } catch(e) { return false; }
       if (r.status === 403) { showSave(); return true; }

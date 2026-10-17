@@ -165,7 +165,7 @@
           </div>
         </div>
         <form class="demo-inputrow" id="demoForm">
-          <input id="demoInput" type="text" placeholder="Say something to your council…" autocomplete="off" maxlength="2000" aria-label="Message your council">
+          <input id="demoInput" type="text" placeholder="Say something — or tap a voice to have them speak…" autocomplete="off" maxlength="2000" aria-label="Message your council">
           <button class="btn" type="submit" id="demoSend">Send</button>
         </form>
         <div class="demo-count" id="demoCount"></div>
@@ -314,7 +314,12 @@
         dot.className = 'dot';
         b.appendChild(dot);
         b.appendChild(document.createTextNode(v.name));
-        b.addEventListener('click', () => { voice = v.id; renderChips(); });
+        b.addEventListener('click', () => {
+          voice = v.id; renderChips();
+          // Tap a voice mid-conversation and they speak — responding to the
+          // conversation so far. Before the first message, tap just selects.
+          if (sessionId && !busy && !capped) sendTurn('', v);
+        });
         chipsEl.appendChild(b);
       });
     }
@@ -484,16 +489,11 @@
       }
     }
 
-    formEl.addEventListener('submit', async (e) => {
-      e.preventDefault();
+    async function sendTurn(msg, v){
       if (busy || capped) return;
-      const msg = inputEl.value.trim();
-      if (!msg) return;
       busy = true; sendBtn.disabled = true;
-      addMsg('visitor', msg);
-      inputEl.value = '';
-      const v = voiceById(voice);
       try {
+        if (msg) { addMsg('visitor', msg); inputEl.value = ''; }
         const streamed = await chatStream(msg, v);
         if (!streamed) await chatOnce(msg, v);
       } catch(err) {
@@ -501,6 +501,13 @@
       } finally {
         busy = false; sendBtn.disabled = false;
       }
+    }
+
+    formEl.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const msg = inputEl.value.trim();
+      if (!msg) return;
+      sendTurn(msg, voiceById(voice));
     });
 
     // Voices from the backend when reachable; fallback colors otherwise.

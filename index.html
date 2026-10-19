@@ -120,6 +120,14 @@
   .demo-inputrow input:focus{border-color:var(--accent)}
   .demo-inputrow button{flex-shrink:0}
   .demo-count{font-size:12px;color:var(--faint);margin-top:10px;text-align:center}
+  .speak-offer{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:8px 8px 8px 16px;
+    background:#17171e;border:1px solid var(--line);border-radius:14px;font-size:14px;color:var(--text)}
+  .speak-offer[hidden]{display:none}
+  .speak-offer-text{flex:1;min-width:0}
+  .speak-offer-yes{flex-shrink:0;min-height:44px;padding:10px 20px;border-radius:999px;border:1px solid var(--accent);
+    background:transparent;color:var(--accent);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans)}
+  .speak-offer-no{flex-shrink:0;min-height:44px;min-width:44px;border:0;background:transparent;color:var(--muted);
+    font-size:16px;cursor:pointer}
   .demo-save{display:none;text-align:center;padding:20px 8px 4px}
   .demo-save h3{font-family:var(--serif);font-weight:400;font-size:24px;margin-bottom:8px}
   .demo-save p{color:var(--muted);font-size:15px;margin-bottom:20px}
@@ -179,8 +187,13 @@
             <a class="btn ghost" href="https://zenaf-staging.fly.dev/?claim=1">Continue in my account</a>
           </div>
         </div>
+        <div id="speakOffer" class="speak-offer" hidden>
+          <span id="speakOfferText" class="speak-offer-text"></span>
+          <button type="button" id="speakOfferYes" class="speak-offer-yes">Respond</button>
+          <button type="button" id="speakOfferNo" class="speak-offer-no" aria-label="Dismiss">✕</button>
+        </div>
         <form class="demo-inputrow" id="demoForm">
-          <input id="demoInput" type="text" placeholder="Say something — or tap a voice to have them speak…" autocomplete="off" maxlength="2000" aria-label="Message your council">
+          <input id="demoInput" type="text" placeholder="Say something — or tap a voice to choose who speaks…" autocomplete="off" maxlength="2000" aria-label="Message your council">
           <button class="btn" type="submit" id="demoSend">Send</button>
         </form>
         <div class="demo-count" id="demoCount"></div>
@@ -331,6 +344,37 @@
 
     function voiceById(id){ return voices.find(v => v.id === id) || voices[0]; }
 
+    // Speak offer: tapping a voice selects it; when there's a prior voice
+    // turn, an inline offer near the composer lets the visitor have the
+    // selected voice respond to the last voice's response. Never auto-fires.
+    const speakOffer = document.getElementById('speakOffer');
+    const speakOfferText = document.getElementById('speakOfferText');
+    const speakOfferYes = document.getElementById('speakOfferYes');
+    const speakOfferNo = document.getElementById('speakOfferNo');
+    let offerVoiceId = null;
+    function lastVoiceName(){
+      const whos = chatEl.querySelectorAll('.demo-msg.voice .who');
+      return whos.length ? whos[whos.length - 1].textContent : null;
+    }
+    function hideSpeakOffer(){ speakOffer.hidden = true; offerVoiceId = null; }
+    function maybeShowSpeakOffer(v){
+      if (!sessionId || busy || capped) { hideSpeakOffer(); return; }
+      const last = lastVoiceName();
+      if (!last) { hideSpeakOffer(); return; }
+      if (!speakOffer.hidden && offerVoiceId === v.id) return; // idempotent
+      offerVoiceId = v.id;
+      speakOfferText.textContent = (v.name === last)
+        ? `Have ${v.name} continue?`
+        : `Have ${v.name} respond to ${last}'s response?`;
+      speakOffer.hidden = false;
+    }
+    if (speakOfferYes) speakOfferYes.addEventListener('click', () => {
+      const v = voiceById(offerVoiceId || voice);
+      hideSpeakOffer();
+      if (sessionId && !busy && !capped) sendTurn('', v);
+    });
+    if (speakOfferNo) speakOfferNo.addEventListener('click', hideSpeakOffer);
+
     function renderChips(){
       chipsEl.innerHTML = '';
       voices.forEach(v => {
@@ -346,9 +390,10 @@
         b.appendChild(document.createTextNode(v.name));
         b.addEventListener('click', () => {
           voice = v.id; renderChips();
-          // Tap a voice mid-conversation and they speak — responding to the
-          // conversation so far. Before the first message, tap just selects.
-          if (sessionId && !busy && !capped) sendTurn('', v);
+          // Tap selects the voice. If a voice has already spoken, offer to
+          // have the selected voice respond to it — never auto-fires.
+          // Before the first exchange, tap just selects.
+          maybeShowSpeakOffer(v);
         });
         chipsEl.appendChild(b);
       });
@@ -562,7 +607,12 @@
       e.preventDefault();
       const msg = inputEl.value.trim();
       if (!msg) return;
+      hideSpeakOffer();
       sendTurn(msg, voiceById(voice));
+    });
+    // Typing dismisses the speak offer — the visitor is taking the floor.
+    if (inputEl) inputEl.addEventListener('input', () => {
+      if (!speakOffer.hidden) hideSpeakOffer();
     });
 
     // Voices from the backend when reachable; fallback colors otherwise.

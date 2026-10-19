@@ -168,12 +168,15 @@
           <p>Save this conversation to keep going — start your council with it, or continue the conversation in your account.</p>
           <div id="claimBox" style="display:none;margin:0 auto 20px;max-width:420px;padding:16px 20px;border:1px dashed var(--accent);border-radius:16px">
             <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Your conversation code</div>
-            <div id="claimCode" style="font-family:var(--serif);font-size:34px;letter-spacing:.18em;color:var(--accent)"></div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:12px">
+              <div id="claimCode" style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:38px;font-weight:600;letter-spacing:.24em;color:var(--accent)"></div>
+              <button type="button" id="copyCode" class="btn ghost" style="padding:10px 16px;font-size:13px;flex-shrink:0">Copy</button>
+            </div>
             <div style="font-size:13px;color:var(--muted);margin-top:6px">Enter this in your account to continue the conversation there.</div>
           </div>
           <div class="hero-cta">
             <a class="btn" href="#waitlist">Save &amp; start my council</a>
-            <a class="btn ghost" href="https://zenaf-staging.fly.dev/">Continue in my account</a>
+            <a class="btn ghost" href="https://zenaf-staging.fly.dev/?claim=1">Continue in my account</a>
           </div>
         </div>
         <form class="demo-inputrow" id="demoForm">
@@ -517,6 +520,28 @@
           })
           .catch(() => {});
       }
+    }
+
+    // Copy the claim code — no mistyping.
+    var copyBtn = document.getElementById('copyCode');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function(){
+        var code = (document.getElementById('claimCode') || {}).textContent || '';
+        code = code.trim();
+        if (!code) return;
+        var done = function(){ copyBtn.textContent = 'Copied ✓'; setTimeout(function(){ copyBtn.textContent = 'Copy'; }, 1600); };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(code).then(done, function(){ fallbackCopy(code); done(); });
+        } else { fallbackCopy(code); done(); }
+        function fallbackCopy(t){
+          try {
+            var ta = document.createElement('textarea');
+            ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
+            document.body.appendChild(ta); ta.select();
+            document.execCommand('copy'); document.body.removeChild(ta);
+          } catch(e) {}
+        }
+      });
     }
 
     async function sendTurn(msg, v){

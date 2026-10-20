@@ -94,10 +94,13 @@
   .demo-box h2 em{color:var(--accent);font-style:italic}
   .demo-sub{color:var(--muted);font-size:15px;margin-bottom:20px;max-width:560px}
   .voice-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
-  .voice-chip{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:8px 16px;border-radius:999px;
+  .voice-chip{position:relative;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:8px 16px;border-radius:999px;
     border:1px solid var(--line);background:transparent;color:var(--muted);font-size:14px;font-family:var(--sans);
     cursor:pointer;transition:border-color .2s,color .2s}
   .voice-chip .dot{width:10px;height:10px;border-radius:50%;background:var(--vc,#8a8a93)}
+  .voice-chip .reg-flag{position:absolute;top:-6px;right:-4px;width:17px;height:17px;border-radius:50%;
+    background:#e8a33d;color:#17130a;font-size:11px;font-weight:700;line-height:1;display:flex;
+    align-items:center;justify-content:center;pointer-events:none}
   .voice-chip[aria-pressed="true"]{color:var(--text);border-color:var(--vc,#8a8a93)}
   .voice-chip[aria-pressed="true"] .dot{box-shadow:0 0 10px var(--vc,#8a8a93)}
   .tapmode-row{margin:-8px 0 16px}
@@ -375,6 +378,20 @@
     });
     if (speakOfferNo) speakOfferNo.addEventListener('click', hideSpeakOffer);
 
+    // Register flags (the backend's register_flag on a demo reply): seats
+    // whose register a previous reply substantially sat in — that seat has
+    // something here. A flag lights an amber "!" badge on the seat's chip
+    // and stays until the chip is tapped (tapping selects exactly as
+    // before) or a new conversation starts. Several seats can be lit at
+    // once; flagging an already-lit seat changes nothing.
+    const registerFlags = new Set();
+    function applyRegisterFlag(id){
+      if (!id || registerFlags.has(id)) return;
+      if (!voices.some(v => v.id === id)) return;
+      registerFlags.add(id);
+      renderChips();
+    }
+
     function renderChips(){
       chipsEl.innerHTML = '';
       voices.forEach(v => {
@@ -388,8 +405,16 @@
         dot.className = 'dot';
         b.appendChild(dot);
         b.appendChild(document.createTextNode(v.name));
+        if (registerFlags.has(v.id)) {
+          const flag = document.createElement('span');
+          flag.className = 'reg-flag';
+          flag.textContent = '!';
+          flag.setAttribute('aria-hidden', 'true');
+          b.appendChild(flag);
+          b.setAttribute('aria-label', v.name + ' — has something to add');
+        }
         b.addEventListener('click', () => {
-          voice = v.id; renderChips();
+          voice = v.id; registerFlags.delete(v.id); renderChips();
           // Tap selects the voice. If a voice has already spoken, offer to
           // have the selected voice respond to it — never auto-fires.
           // Before the first exchange, tap just selects.
@@ -477,6 +502,7 @@
       sessionId = data.session_id;
       exchangesLeft = data.exchanges_left;
       addMsg('voice', data.reply, v);
+      applyRegisterFlag(data.register_flag);
       if (data.capped) showSave(); else updateCount();
     }
 
@@ -515,6 +541,7 @@
               if (typeof ev.reply === 'string') bubble.set(ev.reply);
               sessionId = ev.session_id;
               exchangesLeft = ev.exchanges_left;
+              applyRegisterFlag(ev.register_flag);
               if (ev.capped) showSave(); else updateCount();
             } else if (ev.type === 'error') {
               bubble.remove();

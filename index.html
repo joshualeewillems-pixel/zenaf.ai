@@ -327,6 +327,7 @@
     let voice = 'mentor';
     let sessionId = null;
     let exchangesLeft = null;
+    let exchangesUsed = 0;
     let busy = false;
     let capped = false;
     // Tap-a-voice behavior: 'respond' (voice answers the conversation) or
@@ -392,6 +393,61 @@
       renderChips();
     }
 
+    // Progression reader verdicts: the background reader's read of the
+    // conversation's arc — the set of seats whose move the progression
+    // could genuinely use next (the live forks). A verdict's flags UNION
+    // into the same lit set as register flags, under the same persistence
+    // (lit until that seat is tapped or a new conversation); a verdict's
+    // reason for a seat rides the chip's accessible label. The verdict for
+    // an exchange is assessed in the background after the reply, so after
+    // each response we poll GET /demo/progression until its
+    // exchanges_used catches up — bounded attempts, quiet on error: a
+    // verdict that never lands simply never lights anything. Responses
+    // also carry the previous verdict inline (progression_flags), which
+    // is applied the moment it arrives.
+    const registerReasons = {};
+    function applyProgression(flags, reasons){
+      let changed = false;
+      (flags || []).forEach(id => {
+        if (!voices.some(v => v.id === id)) return;
+        if (!registerFlags.has(id)) { registerFlags.add(id); changed = true; }
+        const reason = reasons && reasons[id];
+        if (reason && registerReasons[id] !== reason) {
+          registerReasons[id] = reason; changed = true;
+        }
+      });
+      if (changed) renderChips();
+    }
+
+    let progressionTarget = 0;
+    let progressionPolling = false;
+    function pollProgression(){
+      if (!sessionId || !exchangesUsed) return;
+      // Aim at the latest exchange; a poll already running picks the new
+      // target up on its next attempt.
+      progressionTarget = exchangesUsed;
+      if (progressionPolling) return;
+      progressionPolling = true;
+      (async () => {
+        try {
+          for (let attempt = 0; attempt < 8; attempt++) {
+            await new Promise(r => setTimeout(r, 2000));
+            let data = null;
+            try {
+              const r = await fetch(API + '/demo/progression?session_id='
+                + encodeURIComponent(sessionId));
+              if (r.ok) data = await r.json();
+            } catch(e) { /* quiet — verdicts are best-effort */ }
+            if (data && typeof data.exchanges_used === 'number'
+                && data.exchanges_used >= progressionTarget) {
+              applyProgression(data.flags, data.reasons);
+              break;
+            }
+          }
+        } finally { progressionPolling = false; }
+      })();
+    }
+
     function renderChips(){
       chipsEl.innerHTML = '';
       voices.forEach(v => {
@@ -411,10 +467,12 @@
           flag.textContent = '!';
           flag.setAttribute('aria-hidden', 'true');
           b.appendChild(flag);
-          b.setAttribute('aria-label', v.name + ' — has something to add');
+          const reason = registerReasons[v.id];
+          b.setAttribute('aria-label',
+            v.name + ' — has something to add' + (reason ? ': ' + reason : ''));
         }
         b.addEventListener('click', () => {
-          voice = v.id; registerFlags.delete(v.id); renderChips();
+          voice = v.id; registerFlags.delete(v.id); delete registerReasons[v.id]; renderChips();
           // Tap selects the voice. If a voice has already spoken, offer to
           // have the selected voice respond to it — never auto-fires.
           // Before the first exchange, tap just selects.
@@ -501,8 +559,11 @@
       const data = await r.json();
       sessionId = data.session_id;
       exchangesLeft = data.exchanges_left;
+      if (typeof data.exchanges_used === 'number') exchangesUsed = data.exchanges_used;
       addMsg('voice', data.reply, v);
       applyRegisterFlag(data.register_flag);
+      applyProgression(data.progression_flags, data.progression_reasons);
+      pollProgression();
       if (data.capped) showSave(); else updateCount();
     }
 
@@ -541,7 +602,10 @@
               if (typeof ev.reply === 'string') bubble.set(ev.reply);
               sessionId = ev.session_id;
               exchangesLeft = ev.exchanges_left;
+              if (typeof ev.exchanges_used === 'number') exchangesUsed = ev.exchanges_used;
               applyRegisterFlag(ev.register_flag);
+              applyProgression(ev.progression_flags, ev.progression_reasons);
+              pollProgression();
               if (ev.capped) showSave(); else updateCount();
             } else if (ev.type === 'error') {
               bubble.remove();
